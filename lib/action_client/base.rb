@@ -29,23 +29,44 @@ module ActionClient
       end
     end
 
-    def post(to:)
-      path = to
+    def build_request(method:, path:, locals: {})
       template_path = self.class.client_name
       template_name = action_name
       template = lookup_context.find(template_name, Array(template_path))
       format = template.format || :json
 
-      body = render(template: template, formats: format)
+      body = render(
+        template: template.virtual_path,
+        formats: format,
+        locals: locals,
+      )
 
       ActionClient::Request.new(
-        method: :post,
+        method: method,
         uri: File.join(URI(defaults.url).to_s, path.to_s),
         body: CGI.unescapeHTML(body),
         headers: {
           "Content-Type": Mime[format].to_s,
-        }.merge(defaults.headers),
+        }.merge(defaults.headers.to_h),
       )
+    end
+
+    %i(
+      connect
+      delete
+      get
+      head
+      options
+      patch
+      post
+      put
+      trace
+    ).each do |verb|
+      class_eval <<-RUBY, __FILE__, __LINE__ + 1
+      def #{verb}(**options)
+        build_request(method: #{verb.inspect}, **options)
+      end
+      RUBY
     end
   end
 end
