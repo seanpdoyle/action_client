@@ -5,6 +5,12 @@ module ActionClient
       ActionClient::Base.append_view_path app.paths["app/views"]
     end
 
+    initializer "action_client.adapters" do
+      ActionClient::Base.default adapter: :net_http
+
+      ActionClient::Base.adapters[:net_http] = ActionClient::Adapters::Net::HttpAdapter.new
+    end
+
     initializer "action_client.routes" do |app|
       if Rails.env.development?
         app.routes.prepend do

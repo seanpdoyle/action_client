@@ -14,15 +14,8 @@ module ActionClient
       @headers = headers.to_h.stringify_keys
     end
 
-    def submit
-      response = (
-        case @method
-        when :post
-          Net::HTTP.post(@uri, @body.to_s, @headers)
-        end
-      )
-
-      JSON.parse(response.body)
+    def submit(adapter = ActionClient::Adapters::Net::HttpAdapter.new)
+      adapter.call(self)
     end
   end
 end

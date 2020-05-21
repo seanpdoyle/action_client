@@ -7,6 +7,10 @@ module ActionClient
     include AbstractController::Rendering
     include ActionView::Layouts
 
+    cattr_accessor :adapters,
+      instance_accessor: true,
+      default: ActiveSupport::OrderedOptions.new
+
     cattr_accessor :defaults,
       instance_accessor: true,
       default: ActiveSupport::OrderedOptions.new
@@ -30,6 +34,8 @@ module ActionClient
     end
 
     def build_request(method:, path:, locals: {})
+      adapter = adapters.fetch(defaults.adapter)
+
       template_path = self.class.client_name
       template_name = action_name
       template = lookup_context.find(template_name, Array(template_path))
@@ -41,7 +47,7 @@ module ActionClient
         locals: locals,
       )
 
-      ActionClient::Request.new(
+      request = ActionClient::Request.new(
         method: method,
         uri: File.join(URI(defaults.url).to_s, path.to_s),
         body: CGI.unescapeHTML(body),
@@ -63,9 +69,9 @@ module ActionClient
       trace
     ).each do |verb|
       class_eval <<-RUBY, __FILE__, __LINE__ + 1
-      def #{verb}(**options)
-        build_request(method: #{verb.inspect}, **options)
-      end
+        def #{verb}(**options)
+          build_request(method: #{verb.inspect}, **options)
+        end
       RUBY
     end
   end
