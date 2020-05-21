@@ -61,9 +61,16 @@ module ActionClient
         action_dispatch_request.headers[key] = value
       end
 
-      def action_dispatch_request.submit
-        adapter.call(action_dispatch_request)
+      mod = Module.new do
+        mattr_accessor :action_client_adapter, instance_accessor: true
+
+        def submit
+          action_client_adapter.call(self)
+        end
       end
+      mod.action_client_adapter = adapter
+
+      action_dispatch_request.extend(mod)
 
       action_dispatch_request
     end
