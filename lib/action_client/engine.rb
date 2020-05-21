@@ -1,4 +1,3 @@
-
 module ActionClient
   class Engine < ::Rails::Engine
     initializer "action_client.dependencies" do |app|
