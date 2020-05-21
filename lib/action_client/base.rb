@@ -1,5 +1,3 @@
- require_dependency "action_client/request"
-
 module ActionClient
   class Base < AbstractController::Base
     abstract!
