@@ -49,20 +49,19 @@ module ActionClient
         locals: locals,
       )
 
-      headers = defaults.headers.to_h.with_defaults(
+      request = ActionDispatch::Request.new({
+        Rack::RACK_URL_SCHEME => uri.scheme,
+        Rack::HTTP_HOST => uri.hostname,
+        Rack::REQUEST_METHOD => method.to_s.upcase,
+        "ORIGINAL_FULLPATH" => uri.path,
+        "RAW_POST_DATA" => CGI.unescapeHTML(body),
+      })
+
+      defaults.headers.to_h.with_defaults(
         "Content-Type": Mime[format].to_s,
-      ).merge(defaults.headers.to_h)
-
-      request = ActionDispatch::Request.new({})
-      request.request_method = method.to_s.upcase
-
-      headers.each do |key, value|
+      ).merge(defaults.headers.to_h).each do |key, value|
         request.headers[key] = value
       end
-      request.headers[Rack::RACK_URL_SCHEME] = uri.scheme
-      request.headers[Rack::HTTP_HOST] = uri.hostname
-      request.headers["ORIGINAL_FULLPATH"] = uri.path
-      request.headers["RAW_POST_DATA"] = CGI.unescapeHTML(body)
 
       request
     end
