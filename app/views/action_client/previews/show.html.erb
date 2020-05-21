@@ -1,3 +1,12 @@
+<%
+    http_headers = preview.request.headers.reduce({}) do |rewritten_headers, (key, value)|
+      if key.starts_with?("HTTP_") || ActionDispatch::Http::Headers::CGI_VARIABLES.include?(key)
+        rewritten_headers[key.sub(%r{\AHTTP_}, "").titleize.gsub(" ", "-")] = value
+      end
+
+      rewritten_headers
+    end
+%>
 <%= link_to action_client_engine.client_path(client) do %>
   <%= client.client_name %>
 <% end %>
@@ -12,12 +21,12 @@
 
 <pre>
 curl \
-  --request <%= preview.request.method.to_s.upcase %> \
-  <% preview.request.headers.each do |key, value| %>
+  --request <%= preview.request.request_method %> \
+  <% http_headers.each do |key, value| %>
   --header "<%= key %>: <%= value %>" \
   <% end %>
-  --data '<%= preview.request.body.strip %>' \
-  <%= preview.request.uri %>
+  --data '<%= preview.request.body.read.strip %>' \
+  <%= preview.request.original_url %>
 </pre>
 
 <h2>
@@ -25,7 +34,7 @@ curl \
 </h2>
 
 <pre>
-<%= preview.request.method.to_s.upcase %> <%= preview.request.uri %>
+<%= preview.request.request_method %> <%= preview.request.original_url %>
 </pre>
 
 <h2>
@@ -33,7 +42,7 @@ curl \
 </h2>
 
 <pre>
-  <% preview.request.headers.each do |key, value| %>
+  <% http_headers.each do |key, value| %>
 <%= key %>: <%= value %>
   <% end %>
 </pre>
@@ -43,5 +52,5 @@ curl \
 </h2>
 
 <pre>
-<%= JSON.pretty_generate(JSON.parse(preview.request.body)) %>
+<%= JSON.pretty_generate(JSON.parse(preview.request.body.read)) %>
 </pre>
