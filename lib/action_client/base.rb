@@ -47,7 +47,7 @@ module ActionClient
         locals: locals,
       )
 
-      request = ActionDispatch::Request.new({
+      action_dispatch_request = ActionDispatch::Request.new({
         Rack::RACK_URL_SCHEME => uri.scheme,
         Rack::HTTP_HOST => uri.hostname,
         Rack::REQUEST_METHOD => method.to_s.upcase,
@@ -58,10 +58,14 @@ module ActionClient
       defaults.headers.to_h.with_defaults(
         "Content-Type": Mime[format].to_s,
       ).merge(defaults.headers.to_h).each do |key, value|
-        request.headers[key] = value
+        action_dispatch_request.headers[key] = value
       end
 
-      request
+      def action_dispatch_request.submit
+        adapter.call(action_dispatch_request)
+      end
+
+      action_dispatch_request
     end
 
     %i(
