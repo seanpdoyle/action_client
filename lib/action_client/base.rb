@@ -41,20 +41,30 @@ module ActionClient
       template = lookup_context.find(template_name, Array(template_path))
       format = template.format || :json
 
+      uri = URI(File.join(URI(defaults.url).to_s, path.to_s))
+
       body = render(
         template: template.virtual_path,
         formats: format,
         locals: locals,
       )
 
-      request = ActionClient::Request.new(
-        method: method,
-        uri: File.join(URI(defaults.url).to_s, path.to_s),
-        body: CGI.unescapeHTML(body),
-        headers: {
-          "Content-Type": Mime[format].to_s,
-        }.merge(defaults.headers.to_h),
-      )
+      headers = defaults.headers.to_h.with_defaults(
+        "Content-Type": Mime[format].to_s,
+      ).merge(defaults.headers.to_h)
+
+      request = ActionDispatch::Request.new({})
+      request.request_method = method.to_s.upcase
+
+      headers.each do |key, value|
+        request.headers[key] = value
+      end
+      request.headers[Rack::RACK_URL_SCHEME] = uri.scheme
+      request.headers[Rack::HTTP_HOST] = uri.hostname
+      request.headers["ORIGINAL_FULLPATH"] = uri.path
+      request.headers["RAW_POST_DATA"] = CGI.unescapeHTML(body)
+
+      request
     end
 
     %i(

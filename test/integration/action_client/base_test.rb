@@ -35,10 +35,10 @@ module ActionClient
 
       request = ArticleClient.create(article: article)
 
-      assert_equal :post, request.method
-      assert_equal "https://example.com/articles", request.url.to_s
-      assert_equal({ "title" => "Article Title" }, JSON.parse(request.body))
-      assert_equal({ "Content-Type" => "application/json" }, request.headers)
+      assert_equal "POST", request.method
+      assert_equal "https://example.com/articles", request.original_url
+      assert_equal({ "title" => "Article Title" }, JSON.parse(request.body.read))
+      assert_equal "application/json", request.headers["Content-Type"]
     end
 
     test "makes a PUT request with a JSON body declared with locals" do
@@ -49,10 +49,10 @@ module ActionClient
 
       request = ArticleClient.update(article: article)
 
-      assert_equal :put, request.method
-      assert_equal "https://example.com/articles/1", request.url.to_s
-      assert_equal({ "title" => "Article Title" }, JSON.parse(request.body))
-      assert_equal({ "Content-Type" => "application/json" }, request.headers)
+      assert_equal "PUT", request.method
+      assert_equal "https://example.com/articles/1", request.original_url
+      assert_equal({ "title" => "Article Title" }, JSON.parse(request.body.read))
+      assert_equal "application/json", request.headers["Content-Type"]
     end
 
     test "makes a PATCH request with an XML body declared with locals" do
@@ -63,10 +63,10 @@ module ActionClient
 
       request = ArticleClient.update(article: article)
 
-      assert_equal :put, request.method
-      assert_equal "https://example.com/articles/1", request.url.to_s
-      assert_equal "<xml>Article Title</xml>", request.body.strip
-      assert_equal({ "Content-Type" => "application/xml" }, request.headers)
+      assert_equal "PUT", request.method
+      assert_equal "https://example.com/articles/1", request.original_url
+      assert_equal "<xml>Article Title</xml>", request.body.read.strip
+      assert_equal "application/xml", request.headers["Content-Type"]
     end
   end
 end
