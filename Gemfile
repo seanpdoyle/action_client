@@ -16,4 +16,5 @@ gemspec
 
 group :test do
   gem "minitest-around", require: "minitest/around/unit"
+  gem "webmock", require: "webmock/minitest"
 end

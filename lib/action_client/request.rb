@@ -15,12 +15,12 @@ module ActionClient
     end
 
     def submit
-      response = Net::HTTP.start(@uri.hostname, @uri.port) do |http|
+      response = (
         case @method
         when :post
           Net::HTTP.post(@uri, @body.to_s, @headers)
         end
-      end
+      )
 
       JSON.parse(response.body)
     end
