@@ -2,26 +2,23 @@ require "test_helper"
 require "integration_test_case"
 
 module ActionClient
-  class BaseTest < ActionClient::IntegrationTestCase
+  class ClientTestCase < ActionClient::IntegrationTestCase
     Article = Struct.new(:id, :title)
 
-    class ArticleClient < ActionClient::Base
+    class BaseClient < ActionClient::Base
       default url: "https://example.com"
-
-      def create(article:)
-        @article = article
-
-        post path: "/articles"
-      end
-
-      def update(article:)
-        put path: "/articles/#{article.id}", locals: {
-          article: article,
-        }
-      end
     end
+  end
 
+  class RequestsTest < ClientTestCase
     test "constructs a POST request with a JSON body declared with instance variables" do
+      class ArticleClient < BaseClient
+        def create(article:)
+          @article = article
+
+          post path: "/articles"
+        end
+      end
       declare_template ArticleClient, "create.json.erb", <<~ERB
         <%= { title: @article.title }.to_json %>
       ERB
@@ -36,6 +33,13 @@ module ActionClient
     end
 
     test "constructs a PUT request with a JSON body declared with locals" do
+      class ArticleClient < BaseClient
+        def update(article:)
+          put path: "/articles/#{article.id}", locals: {
+            article: article,
+          }
+        end
+      end
       declare_template ArticleClient, "update.json.erb", <<~ERB
         <%= { title: article.title }.to_json %>
       ERB
@@ -50,6 +54,13 @@ module ActionClient
     end
 
     test "constructs a PATCH request with an XML body declared with locals" do
+      class ArticleClient < BaseClient
+        def update(article:)
+          patch path: "/articles/#{article.id}", locals: {
+            article: article,
+          }
+        end
+      end
       declare_template ArticleClient, "update.xml.erb", <<~ERB
         <xml><%= article.title %></xml>
       ERB
@@ -57,22 +68,28 @@ module ActionClient
 
       request = ArticleClient.update(article: article)
 
-      assert_equal "PUT", request.method
+      assert_equal "PATCH", request.method
       assert_equal "https://example.com/articles/1", request.original_url
       assert_equal "<xml>Article Title</xml>", request.body.read.strip
       assert_equal "application/xml", request.headers["Content-Type"]
     end
+  end
 
+  class ResponsesTest < ClientTestCase
     test "#submit makes an appropriate HTTP request" do
+      class ArticleClient < BaseClient
+        def create(article:)
+          post path: "/articles", locals: { article: article }
+        end
+      end
+      declare_template ArticleClient, "create.json.erb", <<~ERB
+      <%= { title: article.title }.to_json %>
+      ERB
+      article = Article.new(nil, "Article Title")
       stub_request(:any, Regexp.new("example.com")).and_return(
         body: %({"responded": true}),
         status: 201,
       )
-
-      declare_template ArticleClient, "create.json.erb", <<~ERB
-      <%= { title: @article.title }.to_json %>
-      ERB
-      article = Article.new(nil, "Article Title")
 
       code, headers, body = ArticleClient.create(article: article).submit
 
@@ -85,8 +102,13 @@ module ActionClient
     end
 
     test "#submit parses a JSON response based on the `Content-Type`" do
+      class ArticleClient < BaseClient
+        def create(article:)
+          post path: "/articles", locals: { article: article }
+        end
+      end
       declare_template ArticleClient, "create.json.erb", <<~ERB
-      {"title": "<%= @article.title %>"}
+      {"title": "<%= article.title %>"}
       ERB
       article = Article.new(nil, "Encoded as JSON")
       stub_request(:post, %r{example.com}).and_return(
@@ -103,8 +125,13 @@ module ActionClient
     end
 
     test "#submit parses an XML response based on the `Content-Type`" do
+      class ArticleClient < BaseClient
+        def create(article:)
+          post path: "/articles", locals: { article: article }
+        end
+      end
       declare_template ArticleClient, "create.xml.erb", <<~ERB
-      <article title="<%= @article.title %>"></article>
+      <article title="<%= article.title %>"></article>
       ERB
       article = Article.new(nil, "Encoded as XML")
       stub_request(:post, %r{example.com}).and_return(
