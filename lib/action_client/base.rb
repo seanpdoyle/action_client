@@ -48,7 +48,7 @@ module ActionClient
         )
       rescue ActionView::MissingTemplate => error
         body = ""
-        content_type = defaults.headers["Content-Type"]
+        content_type = defaults.headers.to_h["Content-Type"]
       end
 
       payload = CGI.unescapeHTML(body).to_s

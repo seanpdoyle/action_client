@@ -8,6 +8,10 @@ module ActionClient
     class BaseClient < ActionClient::Base
       default url: "https://example.com"
     end
+
+    setup do
+      BaseClient.defaults.headers = {}
+    end
   end
 
   class RequestsTest < ClientTestCase
@@ -47,6 +51,48 @@ module ActionClient
       assert_equal "https://example.com/articles", request.original_url
       assert_predicate request.body.read, :blank?
       assert_equal "application/json", request.headers["Content-Type"]
+    end
+
+    test "constructs an OPTIONS request without declaring a body template" do
+      class ArticleClient < BaseClient
+        def status
+          options path: "/status"
+        end
+      end
+
+      request = ArticleClient.status
+
+      assert_equal "OPTIONS", request.method
+      assert_equal "https://example.com/status", request.original_url
+      assert_predicate request.body.read, :blank?
+    end
+
+    test "constructs a HEAD request without declaring a body template" do
+      class ArticleClient < BaseClient
+        def status
+          head path: "/status"
+        end
+      end
+
+      request = ArticleClient.status
+
+      assert_equal "HEAD", request.method
+      assert_equal "https://example.com/status", request.original_url
+      assert_predicate request.body.read, :blank?
+    end
+
+    test "constructs a TRACE request without declaring a body template" do
+      class ArticleClient < BaseClient
+        def status
+          trace path: "/status"
+        end
+      end
+
+      request = ArticleClient.status
+
+      assert_equal "TRACE", request.method
+      assert_equal "https://example.com/status", request.original_url
+      assert_predicate request.body.read, :blank?
     end
 
     test "constructs a DELETE request without declaring a body template" do
