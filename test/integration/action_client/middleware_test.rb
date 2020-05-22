@@ -1,7 +1,6 @@
 require "test_helper"
 require "integration_test_case"
 require "rack/content_length"
-require "rack/contrib/json_body_parser"
 
 module ActionClient
   class MiddlewareTest < ActionClient::IntegrationTestCase
@@ -31,7 +30,7 @@ module ActionClient
 
     test "#processes responses through a middleware stack" do
       with_middleware_stacks(
-        response_middleware: [Rack::JSONBodyParser],
+        response_middleware: [],
       ) do
         declare_template ArticleClient, "create.json.erb", <<~ERB
         {"title": "<%= title %>"}
@@ -47,6 +46,7 @@ module ActionClient
 
         assert_equal "201", status
         assert_equal "application/json", headers["Content-Type"]
+        assert_equal "34", headers["Content-Length"]
         assert_equal({"title" => title, "id" => 1}, body)
       end
     end

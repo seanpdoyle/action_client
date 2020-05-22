@@ -17,7 +17,7 @@ module ActionClient
           [
             response.code,
             ActionClient::Utils.titlecase_keys(response.each_header.to_h),
-            response.body,
+            Array(response.body),
           ]
         end
       end

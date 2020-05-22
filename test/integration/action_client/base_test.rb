@@ -77,7 +77,7 @@ module ActionClient
       code, headers, body = ArticleClient.create(article: article).submit
 
       assert_equal code, "201"
-      assert_equal body, %({"responded": true})
+      assert_equal body, {"responded" => true}
       assert_requested :post, "https://example.com/articles", {
         body: {"title": "Article Title"},
         headers: { "Content-Type" => "application/json" },

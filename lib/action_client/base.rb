@@ -48,12 +48,15 @@ module ActionClient
         locals: locals,
       )
 
+      payload = CGI.unescapeHTML(body).to_s
+
       request = ActionDispatch::Request.new(
         Rack::RACK_URL_SCHEME => uri.scheme,
         Rack::HTTP_HOST => uri.hostname,
         Rack::REQUEST_METHOD => method.to_s.upcase,
         "ORIGINAL_FULLPATH" => uri.path,
-        "RAW_POST_DATA" => CGI.unescapeHTML(body).to_s,
+        "RAW_POST_DATA" => payload,
+        Rack::RACK_INPUT => payload,
       )
 
       app = Rails.configuration.action_client.request_middleware.build(
@@ -70,6 +73,7 @@ module ActionClient
 
       defaults.headers.to_h.with_defaults(
         "Content-Type": content_type,
+        "Accept": content_type,
       ).each do |key, value|
         action_dispatch_request.headers[key] = value
       end
@@ -78,7 +82,20 @@ module ActionClient
         mattr_accessor :action_client_adapter, instance_accessor: true
 
         def submit
-          action_client_adapter.call(self)
+          app = Rails.configuration.action_client.response_middleware.build(
+            proc do |env|
+              action_client_adapter.call(env)
+            end
+          )
+
+          status, headers, body = app.call(self)
+
+          case format.symbol
+          when :json
+            [status, headers, JSON.parse(Array(body).join)]
+          else
+            [status, headers, body]
+          end
         end
       end
       mod.action_client_adapter = adapter
