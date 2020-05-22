@@ -74,10 +74,10 @@ module ActionClient
       ERB
       article = Article.new(nil, "Article Title")
 
-      response = ArticleClient.create(article: article).submit
+      code, headers, body = ArticleClient.create(article: article).submit
 
-      assert_equal response.code, "201"
-      assert_equal response.body, %({"responded": true})
+      assert_equal code, "201"
+      assert_equal body, %({"responded": true})
       assert_requested :post, "https://example.com/articles", {
         body: {"title": "Article Title"},
         headers: { "Content-Type" => "application/json" },

@@ -7,7 +7,8 @@ module ActionClient
     end
 
     initializer "action_client.middleware" do
-      config.action_client.middleware = ActionDispatch::MiddlewareStack.new
+      config.action_client.request_middleware = ActionDispatch::MiddlewareStack.new
+      config.action_client.response_middleware = ActionDispatch::MiddlewareStack.new
     end
 
     initializer "action_client.adapters" do

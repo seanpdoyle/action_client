@@ -53,10 +53,10 @@ module ActionClient
         Rack::HTTP_HOST => uri.hostname,
         Rack::REQUEST_METHOD => method.to_s.upcase,
         "ORIGINAL_FULLPATH" => uri.path,
-        "RAW_POST_DATA" => CGI.unescapeHTML(body),
+        "RAW_POST_DATA" => CGI.unescapeHTML(body).to_s,
       )
 
-      app = Rails.configuration.action_client.middleware.build(
+      app = Rails.configuration.action_client.request_middleware.build(
         proc do |env|
           [200, request.headers, request.body]
         end
@@ -64,7 +64,9 @@ module ActionClient
 
       status, headers, body = app.call(request)
 
-      action_dispatch_request = ActionDispatch::Request.new(headers)
+      action_dispatch_request = ActionDispatch::Request.new(
+        headers.merge("RAW_POST_DATA" => Array(body).join),
+      )
 
       defaults.headers.to_h.with_defaults(
         "Content-Type": content_type,

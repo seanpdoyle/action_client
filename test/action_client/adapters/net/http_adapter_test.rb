@@ -20,10 +20,10 @@ module ActionClient
           request.headers["Content-Type"] = "application/json"
           adapter = ActionClient::Adapters::Net::HttpAdapter.new
 
-          response = adapter.call(request)
+          code, headers, body = adapter.call(request)
 
-          assert_equal %({"responded": true}), response.body
-          assert_equal "201", response.code
+          assert_equal %({"responded": true}), body
+          assert_equal "201", code
           assert_requested :post, uri, {
             body: %({"requested": true}),
             headers: {
