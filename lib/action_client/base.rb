@@ -38,6 +38,7 @@ module ActionClient
       template_name = action_name
       template = lookup_context.find(template_name, Array(template_path))
       format = template.format || :json
+      content_type = Mime[format].to_s
 
       uri = URI(File.join(URI(defaults.url).to_s, path.to_s))
 
@@ -47,17 +48,27 @@ module ActionClient
         locals: locals,
       )
 
-      action_dispatch_request = ActionDispatch::Request.new({
+      request = ActionDispatch::Request.new(
         Rack::RACK_URL_SCHEME => uri.scheme,
         Rack::HTTP_HOST => uri.hostname,
         Rack::REQUEST_METHOD => method.to_s.upcase,
         "ORIGINAL_FULLPATH" => uri.path,
         "RAW_POST_DATA" => CGI.unescapeHTML(body),
-      })
+      )
+
+      app = Rails.configuration.action_client.middleware.build(
+        proc do |env|
+          [200, request.headers, request.body]
+        end
+      )
+
+      status, headers, body = app.call(request)
+
+      action_dispatch_request = ActionDispatch::Request.new(headers)
 
       defaults.headers.to_h.with_defaults(
-        "Content-Type": Mime[format].to_s,
-      ).merge(defaults.headers.to_h).each do |key, value|
+        "Content-Type": content_type,
+      ).each do |key, value|
         action_dispatch_request.headers[key] = value
       end
 
