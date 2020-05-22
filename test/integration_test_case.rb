@@ -1,3 +1,5 @@
+require "action_client/engine"
+
 module ActionClient
   class IntegrationTestCase < ActiveSupport::TestCase
     def around(&block)

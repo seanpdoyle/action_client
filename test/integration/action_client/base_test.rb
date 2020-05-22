@@ -1,6 +1,5 @@
 require "test_helper"
 require "integration_test_case"
-require "action_client/engine"
 
 module ActionClient
   class BaseTest < ActionClient::IntegrationTestCase
@@ -23,7 +22,7 @@ module ActionClient
     end
 
     test "constructs a POST request with a JSON body declared with instance variables" do
-      declare_template ArticleClient, "create.json.erb", <<-ERB
+      declare_template ArticleClient, "create.json.erb", <<~ERB
         <%= { title: @article.title }.to_json %>
       ERB
       article = Article.new(nil, "Article Title")
@@ -37,7 +36,7 @@ module ActionClient
     end
 
     test "constructs a PUT request with a JSON body declared with locals" do
-      declare_template ArticleClient, "update.json.erb", <<-ERB
+      declare_template ArticleClient, "update.json.erb", <<~ERB
         <%= { title: article.title }.to_json %>
       ERB
       article = Article.new("1", "Article Title")
@@ -51,7 +50,7 @@ module ActionClient
     end
 
     test "constructs a PATCH request with an XML body declared with locals" do
-      declare_template ArticleClient, "update.xml.erb", <<-ERB
+      declare_template ArticleClient, "update.xml.erb", <<~ERB
         <xml><%= article.title %></xml>
       ERB
       article = Article.new("1", "Article Title")
@@ -70,7 +69,7 @@ module ActionClient
         status: 201,
       )
 
-      declare_template ArticleClient, "create.json.erb", <<-ERB
+      declare_template ArticleClient, "create.json.erb", <<~ERB
       <%= { title: @article.title }.to_json %>
       ERB
       article = Article.new(nil, "Article Title")
