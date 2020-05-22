@@ -34,21 +34,25 @@ module ActionClient
     def build_request(method:, path:, locals: {})
       adapter = adapters.fetch(defaults.adapter)
 
-      template_path = self.class.client_name
-      template_name = action_name
-      template = lookup_context.find(template_name, Array(template_path))
-      format = template.format || :json
-      content_type = Mime[format].to_s
+      begin
+        template_path = self.class.client_name
+        template_name = action_name
+        template = lookup_context.find(template_name, Array(template_path))
+        format = template.format || :json
+        content_type = Mime[format].to_s
 
-      uri = URI(File.join(URI(defaults.url).to_s, path.to_s))
-
-      body = render(
-        template: template.virtual_path,
-        formats: format,
-        locals: locals,
-      )
+        body = render(
+          template: template.virtual_path,
+          formats: format,
+          locals: locals,
+        )
+      rescue ActionView::MissingTemplate => error
+        body = ""
+        content_type = defaults.headers["Content-Type"]
+      end
 
       payload = CGI.unescapeHTML(body).to_s
+      uri = URI(File.join(URI(defaults.url).to_s, path.to_s))
 
       request = ActionDispatch::Request.new(
         Rack::RACK_URL_SCHEME => uri.scheme,

@@ -32,6 +32,62 @@ module ActionClient
       assert_equal "application/json", request.headers["Content-Type"]
     end
 
+    test "constructs a GET request without declaring a body template" do
+      class ArticleClient < BaseClient
+        default headers: { "Content-Type": "application/json" }
+
+        def all
+          get path: "/articles"
+        end
+      end
+
+      request = ArticleClient.all
+
+      assert_equal "GET", request.method
+      assert_equal "https://example.com/articles", request.original_url
+      assert_predicate request.body.read, :blank?
+      assert_equal "application/json", request.headers["Content-Type"]
+    end
+
+    test "constructs a DELETE request without declaring a body template" do
+      class ArticleClient < BaseClient
+        default headers: {
+          "Content-Type": "application/json",
+        }
+
+        def destroy(article:)
+          delete path: "/articles/#{article.id}"
+        end
+      end
+      article = Article.new("1", nil)
+
+      request = ArticleClient.destroy(article: article)
+
+      assert_equal "DELETE", request.method
+      assert_equal "https://example.com/articles/1", request.original_url
+      assert_predicate request.body.read, :blank?
+      assert_equal "application/json", request.headers["Content-Type"]
+    end
+
+    test "constructs a DELETE request with a JSON body template" do
+      class ArticleClient < BaseClient
+        def destroy(article:)
+          delete path: "/articles/#{article.id}"
+        end
+      end
+      article = Article.new("1", nil)
+      declare_template ArticleClient, "destroy.json", <<~JS
+      {"confirm": true}
+      JS
+
+      request = ArticleClient.destroy(article: article)
+
+      assert_equal "DELETE", request.method
+      assert_equal "https://example.com/articles/1", request.original_url
+      assert_equal({ "confirm"=> true }, JSON.parse(request.body.read))
+      assert_equal "application/json", request.headers["Content-Type"]
+    end
+
     test "constructs a PUT request with a JSON body declared with locals" do
       class ArticleClient < BaseClient
         def update(article:)
