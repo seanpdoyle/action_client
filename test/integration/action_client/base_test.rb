@@ -175,6 +175,67 @@ module ActionClient
       assert_equal "<xml>Article Title</xml>", request.body.read.strip
       assert_equal "application/xml", request.headers["Content-Type"]
     end
+
+    test "constructs a request with the full URL passed as an option" do
+      class ArticleClient < BaseClient
+        def create(article:)
+          post url: "https://example.com/special/articles"
+        end
+      end
+
+      request = ArticleClient.create(article: nil)
+
+      assert_equal "https://example.com/special/articles", request.original_url
+    end
+
+    test "constructs a request with additional headers" do
+      class ArticleClient < BaseClient
+        default headers: {
+          "Content-Type": "application/json",
+        }
+
+        def create(article:)
+          post path: "/articles", headers: {
+            "X-My-Header": "hello!",
+          }
+        end
+      end
+
+      request = ArticleClient.create(article: nil)
+
+      assert_equal "application/json", request.headers["Content-Type"]
+      assert_equal "hello!", request.headers["X-My-Header"]
+    end
+
+    test "constructs a request with overridden headers" do
+      class ArticleClient < BaseClient
+        default headers: {
+          "Content-Type": "application/json",
+        }
+
+        def create(article:)
+          post path: "/articles", headers: {
+            "Content-Type": "application/xml",
+          }
+        end
+      end
+
+      request = ArticleClient.create(article: nil)
+
+      assert_equal "application/xml", request.headers["Content-Type"]
+    end
+
+    test "raises an ArgumentError when both url: and path: are provided" do
+      class ArticleClient < BaseClient
+        def create(article:)
+          post url: "ignored", path: "ignored"
+        end
+      end
+
+      assert_raises ArgumentError do
+        ArticleClient.create(article: nil)
+      end
+    end
   end
 
   class ResponsesTest < ClientTestCase

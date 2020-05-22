@@ -31,8 +31,19 @@ module ActionClient
       end
     end
 
-    def build_request(method:, path:, locals: {})
+    def build_request(method:, path: nil, url: nil, headers: {}, locals: {})
+      if path.present? && url.present?
+        raise ArgumentError, "either pass only url:, or only path:"
+      end
       adapter = adapters.fetch(defaults.adapter)
+
+      uri = URI(url || defaults.url)
+
+      if path.present?
+        uri = URI(File.join(uri.to_s, path.to_s))
+      end
+
+      headers = headers.to_h.with_defaults(defaults.headers)
 
       begin
         template_path = self.class.client_name
@@ -48,11 +59,10 @@ module ActionClient
         )
       rescue ActionView::MissingTemplate => error
         body = ""
-        content_type = defaults.headers.to_h["Content-Type"]
+        content_type = headers["Content-Type"]
       end
 
       payload = CGI.unescapeHTML(body).to_s
-      uri = URI(File.join(URI(defaults.url).to_s, path.to_s))
 
       request = ActionDispatch::Request.new(
         Rack::RACK_URL_SCHEME => uri.scheme,
@@ -69,13 +79,13 @@ module ActionClient
         end
       )
 
-      status, headers, body = app.call(request)
+      status, request_headers, body = app.call(request)
 
       action_dispatch_request = ActionDispatch::Request.new(
-        headers.merge("RAW_POST_DATA" => Array(body).join),
+        request_headers.merge("RAW_POST_DATA" => Array(body).join),
       )
 
-      defaults.headers.to_h.with_defaults(
+      headers.with_defaults(
         "Content-Type": content_type,
         "Accept": content_type,
       ).each do |key, value|
@@ -92,15 +102,15 @@ module ActionClient
             end
           )
 
-          status, headers, body = app.call(self)
+          status, response_headers, body = app.call(self)
 
           case format.symbol
           when :json
-            [status, headers, JSON.parse(StringIO.new(body).read)]
+            [status, response_headers, JSON.parse(StringIO.new(body).read)]
           when :xml
-            [status, headers, Nokogiri::XML(StringIO.new(body).read)]
+            [status, response_headers, Nokogiri::XML(StringIO.new(body).read)]
           else
-            [status, headers, body]
+            [status, response_headers, body]
           end
         end
       end
