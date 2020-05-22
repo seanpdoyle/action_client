@@ -83,5 +83,42 @@ module ActionClient
         headers: { "Content-Type" => "application/json" },
       }
     end
+
+    test "#submit parses a JSON response based on the `Content-Type`" do
+      declare_template ArticleClient, "create.json.erb", <<~ERB
+      {"title": "<%= @article.title %>"}
+      ERB
+      article = Article.new(nil, "Encoded as JSON")
+      stub_request(:post, %r{example.com}).and_return(
+        body: {"title": article.title, id: 1}.to_json,
+        headers: {"Content-Type": "application/json"},
+        status: 201,
+      )
+
+      status, headers, body = ArticleClient.create(article: article).submit
+
+      assert_equal "201", status
+      assert_equal "application/json", headers["Content-Type"]
+      assert_equal({"title" => article.title, "id" => 1}, body)
+    end
+
+    test "#submit parses an XML response based on the `Content-Type`" do
+      declare_template ArticleClient, "create.xml.erb", <<~ERB
+      <article title="<%= @article.title %>"></article>
+      ERB
+      article = Article.new(nil, "Encoded as XML")
+      stub_request(:post, %r{example.com}).and_return(
+        body: %(<article title="#{article.title}" id="1"></article>),
+        headers: {"Content-Type": "application/xml"},
+        status: 201,
+      )
+
+      status, headers, body = ArticleClient.create(article: article).submit
+
+      assert_equal "201", status
+      assert_equal "application/xml", headers["Content-Type"]
+      assert_equal article.title, body.root["title"]
+      assert_equal "1", body.root["id"]
+    end
   end
 end

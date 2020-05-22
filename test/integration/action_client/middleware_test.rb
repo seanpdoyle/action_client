@@ -28,29 +28,6 @@ module ActionClient
       end
     end
 
-    test "#processes responses through a middleware stack" do
-      with_middleware_stacks(
-        response_middleware: [],
-      ) do
-        declare_template ArticleClient, "create.json.erb", <<~ERB
-        {"title": "<%= title %>"}
-        ERB
-        title = "Encoded as JSON"
-        stub_request(:post, %r{example.com}).and_return(
-          body: {"title": title, id: 1}.to_json,
-          headers: {"Content-Type": "application/json"},
-          status: 201,
-        )
-
-        status, headers, body = ArticleClient.create(title).submit
-
-        assert_equal "201", status
-        assert_equal "application/json", headers["Content-Type"]
-        assert_equal "34", headers["Content-Length"]
-        assert_equal({"title" => title, "id" => 1}, body)
-      end
-    end
-
     def with_middleware_stacks(middlewares_keyed_by_configuration, &block)
       configuration = Rails.configuration.action_client
       defaults = configuration.slice(middlewares_keyed_by_configuration.keys)

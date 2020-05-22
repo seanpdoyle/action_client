@@ -92,7 +92,9 @@ module ActionClient
 
           case format.symbol
           when :json
-            [status, headers, JSON.parse(Array(body).join)]
+            [status, headers, JSON.parse(StringIO.new(body).read)]
+          when :xml
+            [status, headers, Nokogiri::XML(StringIO.new(body).read)]
           else
             [status, headers, body]
           end
