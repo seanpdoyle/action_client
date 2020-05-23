@@ -7,7 +7,10 @@ module ActionClient
     end
 
     initializer "action_client.middleware" do
-      config.action_client.request_middleware = ActionDispatch::MiddlewareStack.new
+      config.action_client.request_middleware = ActionDispatch::MiddlewareStack.new do |stack|
+        stack.use Rack::ContentLength
+      end
+
       config.action_client.response_middleware = ActionDispatch::MiddlewareStack.new do |stack|
         stack.use Rails::Rack::Logger
       end

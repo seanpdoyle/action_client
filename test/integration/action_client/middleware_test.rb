@@ -1,6 +1,5 @@
 require "test_helper"
 require "integration_test_case"
-require "rack/content_length"
 
 module ActionClient
   class MiddlewareTest < ActionClient::IntegrationTestCase
