@@ -22,6 +22,14 @@ module ActionClient
       ActionClient::Base.view_paths = view_paths
     end
 
+    def declare_layout(layout_name, body)
+      @partial_path.join("layouts", layout_name).tap do |file|
+        file.dirname.mkpath
+
+        file.write(body)
+      end
+    end
+
     def declare_template(client_class, partial_path, body)
       partial_directory = client_class.name.underscore
 

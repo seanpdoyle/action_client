@@ -176,6 +176,31 @@ module ActionClient
       assert_equal "application/xml", request.headers["Content-Type"]
     end
 
+    test "constructs a request with a body wrapped by a layout" do
+      class ArticleClient < BaseClient
+        def create(article:)
+          post \
+            layout: "article_client",
+            locals: { article: article },
+            url: "https://example.com/special/articles"
+        end
+      end
+      declare_layout "article_client.json.erb", <<~ERB
+      { "response": <%= yield %> }
+      ERB
+      declare_template ArticleClient, "create.json.erb", <<~ERB
+      { "title": "<%= article.title %>" }
+      ERB
+      article = Article.new(nil, "From Layout")
+
+      request = ArticleClient.create(article: article)
+
+      assert_equal(
+        { "response" => { "title" => "From Layout" } },
+        JSON.parse(request.body.read)
+      )
+    end
+
     test "constructs a request with the full URL passed as an option" do
       class ArticleClient < BaseClient
         def create(article:)

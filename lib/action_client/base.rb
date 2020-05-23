@@ -27,7 +27,7 @@ module ActionClient
       end
     end
 
-    def build_request(method:, path: nil, url: nil, headers: {}, locals: {})
+    def build_request(method:, path: nil, url: nil, headers: {}, **options)
       if path.present? && url.present?
         raise ArgumentError, "either pass only url:, or only path:"
       end
@@ -50,7 +50,7 @@ module ActionClient
         body = render(
           template: template.virtual_path,
           formats: format,
-          locals: locals,
+          **options,
         )
       rescue ActionView::MissingTemplate => error
         body = ""
