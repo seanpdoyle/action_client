@@ -8,13 +8,9 @@ module ActionClient
 
     initializer "action_client.middleware" do
       config.action_client.request_middleware = ActionDispatch::MiddlewareStack.new
-      config.action_client.response_middleware = ActionDispatch::MiddlewareStack.new
-    end
-
-    initializer "action_client.adapters" do
-      ActionClient::Base.default adapter: :net_http
-
-      ActionClient::Base.adapters[:net_http] = ActionClient::Adapters::Net::HttpAdapter.new
+      config.action_client.response_middleware = ActionDispatch::MiddlewareStack.new do |stack|
+        stack.use Rails::Rack::Logger
+      end
     end
 
     initializer "action_client.routes" do |app|

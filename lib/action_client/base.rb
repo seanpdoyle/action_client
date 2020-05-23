@@ -5,10 +5,6 @@ module ActionClient
     include AbstractController::Rendering
     include ActionView::Layouts
 
-    cattr_accessor :adapters,
-      instance_accessor: true,
-      default: ActiveSupport::OrderedOptions.new
-
     cattr_accessor :defaults,
       instance_accessor: true,
       default: ActiveSupport::OrderedOptions.new
@@ -35,7 +31,6 @@ module ActionClient
       if path.present? && url.present?
         raise ArgumentError, "either pass only url:, or only path:"
       end
-      adapter = adapters.fetch(defaults.adapter)
 
       uri = URI(url || defaults.url)
 
@@ -94,10 +89,10 @@ module ActionClient
       end
 
       mod = Module.new do
-        mattr_accessor :action_client_adapter, instance_accessor: true
-
         def submit
-          app = Rails.configuration.action_client.response_middleware.build(action_client_adapter)
+          app = Rails.configuration.action_client.response_middleware.build(
+            ActionClient::Adapters::Net::HttpAdapter.new
+          )
 
           status, response_headers, body = app.call(env)
 
@@ -111,7 +106,6 @@ module ActionClient
           end
         end
       end
-      mod.action_client_adapter = adapter
 
       action_dispatch_request.extend(mod)
 
