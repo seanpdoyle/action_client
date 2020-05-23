@@ -4,7 +4,8 @@ module ActionClient
   module Adapters
     module Net
       class HttpAdapter
-        def call(request)
+        def call(env)
+          request = ActionDispatch::Request.new(env)
           method = request.request_method.to_s.downcase
 
           response = ::Net::HTTP.public_send(

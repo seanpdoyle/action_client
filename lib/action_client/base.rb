@@ -43,7 +43,7 @@ module ActionClient
         uri = URI(File.join(uri.to_s, path.to_s))
       end
 
-      headers = headers.to_h.with_defaults(defaults.headers)
+      headers = headers.to_h.with_defaults(defaults.headers.to_h)
 
       begin
         template_path = self.class.client_name
@@ -64,22 +64,23 @@ module ActionClient
 
       payload = CGI.unescapeHTML(body).to_s
 
-      request = ActionDispatch::Request.new(
-        Rack::RACK_URL_SCHEME => uri.scheme,
-        Rack::HTTP_HOST => uri.hostname,
-        Rack::REQUEST_METHOD => method.to_s.upcase,
-        "ORIGINAL_FULLPATH" => uri.path,
-        "RAW_POST_DATA" => payload,
-        Rack::RACK_INPUT => payload,
-      )
-
       app = Rails.configuration.action_client.request_middleware.build(
         proc do |env|
+          request = ActionDispatch::Request.new(env)
+
           [200, request.headers, request.body]
         end
       )
 
-      status, request_headers, body = app.call(request)
+      status, request_headers, body = app.call(
+        Rack::RACK_URL_SCHEME => uri.scheme,
+        Rack::HTTP_HOST => uri.hostname,
+        Rack::REQUEST_METHOD => method.to_s.upcase,
+        "ORIGINAL_FULLPATH" => uri.path,
+        Rack::PATH_INFO => uri.path,
+        "RAW_POST_DATA" => payload,
+        Rack::RACK_INPUT => StringIO.new(payload),
+      )
 
       action_dispatch_request = ActionDispatch::Request.new(
         request_headers.merge("RAW_POST_DATA" => Array(body).join),
@@ -96,13 +97,9 @@ module ActionClient
         mattr_accessor :action_client_adapter, instance_accessor: true
 
         def submit
-          app = Rails.configuration.action_client.response_middleware.build(
-            proc do |env|
-              action_client_adapter.call(env)
-            end
-          )
+          app = Rails.configuration.action_client.response_middleware.build(action_client_adapter)
 
-          status, response_headers, body = app.call(self)
+          status, response_headers, body = app.call(env)
 
           case format.symbol
           when :json

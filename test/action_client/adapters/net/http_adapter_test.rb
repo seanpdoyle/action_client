@@ -10,17 +10,18 @@ module ActionClient
             body: %({"responded": true}),
             status: 201,
           )
-          request = ActionDispatch::Request.new({
+          payload = %({"requested": true})
+          adapter = ActionClient::Adapters::Net::HttpAdapter.new
+
+          code, headers, body = adapter.call(
             Rack::RACK_URL_SCHEME => uri.scheme,
             Rack::HTTP_HOST => uri.hostname,
             Rack::REQUEST_METHOD => "POST",
             "ORIGINAL_FULLPATH" => uri.path,
-            "RAW_POST_DATA" => %({"requested": true})
-          })
-          request.headers["Content-Type"] = "application/json"
-          adapter = ActionClient::Adapters::Net::HttpAdapter.new
-
-          code, headers, body = adapter.call(request)
+            "RAW_POST_DATA" => payload,
+            Rack::RACK_INPUT => StringIO.new(payload),
+            "CONTENT_TYPE" => "application/json",
+          )
 
           assert_equal %({"responded": true}), body
           assert_equal "201", code
