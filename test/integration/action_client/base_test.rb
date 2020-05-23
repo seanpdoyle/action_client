@@ -276,6 +276,7 @@ module ActionClient
       article = Article.new(nil, "Article Title")
       stub_request(:any, Regexp.new("example.com")).and_return(
         body: %({"responded": true}),
+        headers: {"Content-Type": "application/json"},
         status: 201,
       )
 

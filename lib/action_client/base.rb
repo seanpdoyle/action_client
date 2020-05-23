@@ -73,7 +73,6 @@ module ActionClient
         Rack::REQUEST_METHOD => method.to_s.upcase,
         "ORIGINAL_FULLPATH" => uri.path,
         Rack::PATH_INFO => uri.path,
-        "RAW_POST_DATA" => payload,
         Rack::RACK_INPUT => StringIO.new(payload),
       )
 
