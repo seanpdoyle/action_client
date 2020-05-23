@@ -302,14 +302,14 @@ module ActionClient
       article = Article.new(nil, "Encoded as JSON")
       stub_request(:post, %r{example.com}).and_return(
         body: {"title": article.title, id: 1}.to_json,
-        headers: {"Content-Type": "application/json"},
+        headers: {"Content-Type": "application/json;charset=UTF-8"},
         status: 201,
       )
 
       status, headers, body = ArticleClient.create(article: article).submit
 
       assert_equal 201, status
-      assert_equal "application/json", headers["Content-Type"]
+      assert_equal "application/json;charset=UTF-8", headers["Content-Type"]
       assert_equal({"title" => article.title, "id" => 1}, body)
     end
 
