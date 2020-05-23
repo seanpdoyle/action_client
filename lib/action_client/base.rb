@@ -94,16 +94,7 @@ module ActionClient
             ActionClient::Middleware::Net::HttpClient.new
           )
 
-          status, response_headers, body = app.call(env)
-
-          case format.symbol
-          when :json
-            [status, response_headers, JSON.parse(StringIO.new(body).read)]
-          when :xml
-            [status, response_headers, Nokogiri::XML(StringIO.new(body).read)]
-          else
-            [status, response_headers, body]
-          end
+          app.call(env)
         end
       end
 

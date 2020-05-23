@@ -15,11 +15,11 @@ module ActionClient
             ActionClient::Utils.headers_to_hash(request.headers),
           )
 
-          [
+          ActionDispatch::Response.new(
             response.code,
-            ActionClient::Utils.titlecase_keys(response.each_header.to_h),
-            response.body,
-          ]
+            response.each_header.to_h,
+            Array(response.body),
+          ).to_a
         end
       end
     end

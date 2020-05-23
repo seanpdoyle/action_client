@@ -281,7 +281,7 @@ module ActionClient
 
       code, headers, body = ArticleClient.create(article: article).submit
 
-      assert_equal code, "201"
+      assert_equal code, 201
       assert_equal body, {"responded" => true}
       assert_requested :post, "https://example.com/articles", {
         body: {"title": "Article Title"},
@@ -307,7 +307,7 @@ module ActionClient
 
       status, headers, body = ArticleClient.create(article: article).submit
 
-      assert_equal "201", status
+      assert_equal 201, status
       assert_equal "application/json", headers["Content-Type"]
       assert_equal({"title" => article.title, "id" => 1}, body)
     end
@@ -330,7 +330,7 @@ module ActionClient
 
       status, headers, body = ArticleClient.create(article: article).submit
 
-      assert_equal "201", status
+      assert_equal 201, status
       assert_equal "application/xml", headers["Content-Type"]
       assert_equal article.title, body.root["title"]
       assert_equal "1", body.root["id"]

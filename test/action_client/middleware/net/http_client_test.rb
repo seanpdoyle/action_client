@@ -23,8 +23,8 @@ module ActionClient
             "CONTENT_TYPE" => "application/json",
           )
 
-          assert_equal %({"responded": true}), body
-          assert_equal "201", code
+          assert_equal %({"responded": true}), body.each(&:yield_self).sum
+          assert_equal 201, code
           assert_requested :post, uri, {
             body: %({"requested": true}),
             headers: {
