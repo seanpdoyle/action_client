@@ -12,7 +12,7 @@ module ActionClient
       end
 
       config.action_client.response_middleware = ActionDispatch::MiddlewareStack.new do |stack|
-        stack.use Rails::Rack::Logger
+        stack.use Rails::Rack::Logger, [ActionClient::Middleware::Logger]
       end
     end
 

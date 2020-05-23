@@ -1,9 +1,9 @@
 require "net/http"
 
 module ActionClient
-  module Adapters
+  module Middleware
     module Net
-      class HttpAdapter
+      class HttpClient
         def call(env)
           request = ActionDispatch::Request.new(env)
           method = request.request_method.to_s.downcase

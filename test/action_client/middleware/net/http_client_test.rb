@@ -1,9 +1,9 @@
 require "test_helper"
 
 module ActionClient
-  module Adapters
+  module Middleware
     module Net
-      class HttpAdapterTest < ActiveSupport::TestCase
+      class HttpClientTest < ActiveSupport::TestCase
         test "#submit sends a POST request" do
           uri = URI("https://www.example.com/articles")
           stub_request(:any, Regexp.new(uri.hostname)).and_return(
@@ -11,7 +11,7 @@ module ActionClient
             status: 201,
           )
           payload = %({"requested": true})
-          adapter = ActionClient::Adapters::Net::HttpAdapter.new
+          adapter = ActionClient::Middleware::Net::HttpClient.new
 
           code, headers, body = adapter.call(
             Rack::RACK_URL_SCHEME => uri.scheme,

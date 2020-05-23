@@ -91,7 +91,7 @@ module ActionClient
       mod = Module.new do
         def submit
           app = Rails.configuration.action_client.response_middleware.build(
-            ActionClient::Adapters::Net::HttpAdapter.new
+            ActionClient::Middleware::Net::HttpClient.new
           )
 
           status, response_headers, body = app.call(env)
