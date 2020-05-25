@@ -69,7 +69,7 @@ module ActionClient
 
       status, request_headers, body = app.call(
         Rack::RACK_URL_SCHEME => uri.scheme,
-        Rack::HTTP_HOST => uri.hostname,
+        Rack::HTTP_HOST => "#{uri.hostname}:#{uri.port}",
         Rack::REQUEST_METHOD => method.to_s.upcase,
         "ORIGINAL_FULLPATH" => uri.path,
         Rack::PATH_INFO => uri.path,
