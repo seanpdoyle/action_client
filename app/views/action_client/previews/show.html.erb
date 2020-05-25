@@ -38,10 +38,12 @@ curl \
   <% end %>
 </pre>
 
-<h2>
-  Body
-</h2>
+<% if preview.request.body.read.present? %>
+  <h2>
+    Body
+  </h2>
 
-<pre id="body"><%=
-  JSON.pretty_generate(JSON.parse(preview.request.body.read))
-%></pre>
+  <pre id="body"><%=
+    JSON.pretty_generate(JSON.parse(preview.request.body.read))
+  %></pre>
+<% end %>
