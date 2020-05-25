@@ -24,7 +24,7 @@ curl \
   HTTP Action
 </h2>
 
-<pre>
+<pre id="url">
 <%= preview.request.request_method %> <%= preview.request.original_url %>
 </pre>
 
@@ -42,6 +42,6 @@ curl \
   Body
 </h2>
 
-<pre>
-<%= JSON.pretty_generate(JSON.parse(preview.request.body.read)) %>
-</pre>
+<pre id="body"><%=
+  JSON.pretty_generate(JSON.parse(preview.request.body.read))
+%></pre>
