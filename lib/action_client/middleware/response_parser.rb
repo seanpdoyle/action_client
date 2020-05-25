@@ -12,7 +12,7 @@ module ActionClient
 
         if body.present?
           if content_type.starts_with?("application/json")
-            body = JSON.parse(body)
+            body = JSON.parse(body, object_class: HashWithIndifferentAccess)
           elsif content_type.starts_with?("application/xml")
             body = Nokogiri::XML(body)
           else
