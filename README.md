@@ -87,9 +87,13 @@ When `ActionClient` is able to infer the request's `Content-Type` to be either
 `JSON` or `XML`, it will parse the returned `body` value ahead of time.
 
 Requests make with `application/json` will be parsed into [`Hash`
-instances][ruby-hash] by [`JSON.parse`][json-parse], and requests made with
-`application/xml` will be parsed into [`Nokogiri::XML::Document`
-instances][nokogiri-document] by [`Nokogiri::XML`][nokogiri-xml].
+instances][ruby-hash] by [`JSON.parse`][json-parse]. JSON objects will be parsed
+into instances of [`HashWithIndifferentAccess`][HashWithIndifferentAccess], so
+that keys can be accessed via `Symbol` or  `String`.
+
+Requests made with `application/xml` will be parsed into
+[`Nokogiri::XML::Document` instances][nokogiri-document] by
+[`Nokogiri::XML`][nokogiri-xml].
 
 If the response body is invalid JSON or XML, the original `body` will be
 returned, unmodified.
@@ -100,6 +104,7 @@ returned, unmodified.
 [rack]: https://github.com/rack/rack
 [rack-response]: https://github.com/rack/rack/blob/master/SPEC.rdoc#the-response-
 [json-parse]: https://ruby-doc.org/stdlib-2.6.3/libdoc/json/rdoc/JSON.html#method-i-parse
+[HashWithIndifferentAccess]: https://api.rubyonrails.org/classes/ActiveSupport/HashWithIndifferentAccess.html
 [ruby-hash]: https://ruby-doc.org/core-2.7.1/Hash.html
 [nokogiri-xml]: https://nokogiri.org/rdoc/Nokogiri.html#XML-class_method
 [nokogiri-document]: https://nokogiri.org/rdoc/Nokogiri/XML/Document.html

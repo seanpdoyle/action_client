@@ -26,7 +26,7 @@ module ActionClient
       private
 
       def parse_as_json(body)
-        JSON.parse(body)
+        JSON.parse(body, object_class: HashWithIndifferentAccess)
       rescue JSON::ParserError
         body
       end

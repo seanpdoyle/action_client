@@ -21,6 +21,24 @@ module ActionClient
         assert_equal({"response" => true}, body)
       end
 
+      test "#call parses JSON into HashWithIndifferentAccess instances" do
+        app = proc do |env|
+          [
+            200,
+            { Rack::CONTENT_TYPE => "application/json" },
+            env[Rack::RACK_INPUT],
+          ]
+        end
+        middleware = ActionClient::Middleware::ResponseParser.new(app)
+        payload = %([{ "nested": {"response": true} }])
+
+        status, headers, body = middleware.call({
+          Rack::RACK_INPUT => payload.lines,
+        })
+
+        assert_equal true, body.first.dig(:nested, :response)
+      end
+
       test "#call recovers from decoding invalid JSON" do
         payload = "junk"
         app = proc do |env|
