@@ -91,6 +91,9 @@ instances][ruby-hash] by [`JSON.parse`][json-parse], and requests made with
 `application/xml` will be parsed into [`Nokogiri::XML::Document`
 instances][nokogiri-document] by [`Nokogiri::XML`][nokogiri-xml].
 
+If the response body is invalid JSON or XML, the original `body` will be
+returned, unmodified.
+
 [mdn-post]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST
 [naming-actions]: https://guides.rubyonrails.org/action_controller_overview.html#methods-and-actions
 [mdn-content-type]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type

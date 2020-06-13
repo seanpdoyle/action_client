@@ -21,6 +21,24 @@ module ActionClient
         assert_equal({"response" => true}, body)
       end
 
+      test "#call recovers from decoding invalid JSON" do
+        payload = "junk"
+        app = proc do |env|
+          [
+            200,
+            { Rack::CONTENT_TYPE => "application/json" },
+            env[Rack::RACK_INPUT],
+          ]
+        end
+        middleware = ActionClient::Middleware::ResponseParser.new(app)
+
+        status, headers, body = middleware.call({
+          Rack::RACK_INPUT => payload.lines,
+        })
+
+        assert_equal("junk", body)
+      end
+
       test "#call decodes application/xml to XML" do
         payload = %(<node id="root"></node>)
         app = proc do |env|
@@ -40,7 +58,25 @@ module ActionClient
         assert_equal "root", document.root["id"]
       end
 
-      test "#call does not decodes a body without a matching header" do
+      test "#call recovers from decoding invalid XML" do
+        payload = "junk"
+        app = proc do |env|
+          [
+            200,
+            { Rack::CONTENT_TYPE => "application/xml" },
+            env[Rack::RACK_INPUT],
+          ]
+        end
+        middleware = ActionClient::Middleware::ResponseParser.new(app)
+
+        status, headers, document = middleware.call({
+          Rack::RACK_INPUT => payload.lines,
+        })
+
+        assert_equal "junk", document
+      end
+
+      test "#call does not decode a body without a matching header" do
         payload = "plain-text"
         app = proc do |env|
           [

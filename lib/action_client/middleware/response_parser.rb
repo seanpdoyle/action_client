@@ -12,15 +12,35 @@ module ActionClient
 
         if body.present?
           if content_type.starts_with?("application/json")
-            body = JSON.parse(body)
+            body = parse_as_json(body)
           elsif content_type.starts_with?("application/xml")
-            body = Nokogiri::XML(body)
+            body = parse_as_xml(body)
           else
             body
           end
         end
 
         [ status, headers, body ]
+      end
+
+      private
+
+      def parse_as_json(body)
+        JSON.parse(body)
+      rescue JSON::ParserError
+        body
+      end
+
+      def parse_as_xml(body)
+        document = Nokogiri::XML.parse(body)
+
+        document.validate
+
+        if document.errors.none? { |error| error.is_a?(Nokogiri::XML::SyntaxError) }
+          document
+        else
+          body
+        end
       end
     end
   end
