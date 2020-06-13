@@ -18,10 +18,6 @@ module ActionClient
         client_class.class_eval(&block)
       end
     end
-
-    setup do
-      ActionClient::Base.defaults = ActiveSupport::OrderedOptions.new
-    end
   end
 
   class ActionMethodsTest < ClientTestCase
@@ -491,6 +487,25 @@ module ActionClient
       assert_equal "application/xml", headers["Content-Type"]
       assert_equal article.title, body.root["title"]
       assert_equal "1", body.root["id"]
+    end
+
+    test "integrates with config.action_client.parser" do
+      override_configuration(Rails.configuration.action_client) do |config|
+        config.parsers = { "text/plain": -> (body) { body.strip } }
+        client = declare_client do
+          def all
+            get url: "https://example.com/articles"
+          end
+        end
+        stub_request(:get, "https://example.com/articles").and_return(
+          headers: { "Content-Type": "text/plain" },
+          body: " response ",
+        )
+
+        _, _, body = client.all.submit
+
+        assert_equal "response", body
+      end
     end
   end
 end

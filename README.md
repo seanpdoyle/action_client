@@ -86,12 +86,13 @@ response Headers, and the response Body.
 When `ActionClient` is able to infer the request's `Content-Type` to be either
 `JSON` or `XML`, it will parse the returned `body` value ahead of time.
 
-Requests make with `application/json` will be parsed into [`Hash`
-instances][ruby-hash] by [`JSON.parse`][json-parse]. JSON objects will be parsed
-into instances of [`HashWithIndifferentAccess`][HashWithIndifferentAccess], so
-that keys can be accessed via `Symbol` or  `String`.
+Responses with `Content-Type: applicaiton/json` headers will be parsed into
+[`Hash` instances][ruby-hash] by [`JSON.parse`][json-parse]. JSON objects will
+be parsed into instances of
+[`HashWithIndifferentAccess`][HashWithIndifferentAccess], so that keys can be
+accessed via `Symbol` or  `String`.
 
-Requests made with `application/xml` will be parsed into
+Responses with `Content-Type: application/xml` headers will be parsed into
 [`Nokogiri::XML::Document` instances][nokogiri-document] by
 [`Nokogiri::XML`][nokogiri-xml].
 
@@ -153,6 +154,26 @@ Default values can be overridden on a request-by-request basis.
 
 When a default `url:` key is specified, a request's full URL will be built by
 joining the base `default url: ...` value with the request's `path:` option.
+
+#### Configuring `config.action_client.parser`
+
+By default, `ActionClient` will parse each response's body `String` based on the
+value of the `Content-Type` header. Out of the box, `ActionClient` supports
+parsing `application/json` and `application/xml` headers.
+
+This feature is powered by an extensible set of configurations. If you'd like to
+declare additional parsers for other `Content-Type` values, or you'd like to
+override the existing parsers, declare a `Hash` mapping from `Content-Type`
+values to callable blocks that accept a single String argument containing the
+response's body `String`:
+
+```ruby
+# config/application.rb
+
+config.action_client.parsers = {
+  "text/plain": -> (body) { body.strip },
+}
+```
 
 ### Previews
 
