@@ -61,7 +61,7 @@ client's request action to declare it:
 ```ruby
 class ArticlesClient < ActionClient::Base
   def create(title:)
-    @title = "Hello, World"
+    @title = title
 
     post url: "https://example.com/articles"
   end
