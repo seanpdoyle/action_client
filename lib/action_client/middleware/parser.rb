@@ -16,22 +16,15 @@ module ActionClient
         end
       end
       NullParser = -> (body) { body }
-      NullErrorHandler = -> (_, _, triplet) { triplet }
 
       class_attribute :parsers, default: {
         "application/json": JsonParser,
         "application/xml": XmlParser,
       }.with_indifferent_access
 
-      class_attribute :error_handlers, default: {
-        "application/json": NullErrorHandler,
-        "application/xml": NullErrorHandler,
-      }.with_indifferent_access
-
       def initialize(app, configuration = {})
         @app = app
         @parsers = self.class.parsers.merge(configuration.fetch(:parsers, {}))
-        @error_handlers = self.class.error_handlers.merge(configuration.fetch(:error_handlers, {}))
         @logger = configuration.fetch(:logger, Rails.logger)
       end
 
@@ -48,11 +41,7 @@ module ActionClient
           rescue StandardError => error
             warn(content_type, error)
 
-            error_handler = fetch_error_handler_for_content_type(content_type)
-
-            error_handler_arguments = [ error, content_type, [ status, headers, body ] ]
-
-            error_handler.call(*error_handler_arguments.take(error_handler.arity))
+            raise ActionClient::ParseError.new(error, body, content_type)
           end
         end
       end
@@ -63,16 +52,6 @@ module ActionClient
         @logger.warn <<~ERROR.strip
           [#{self.class.name}] Error on #{content_type} : #{error}
         ERROR
-      end
-
-      def fetch_error_handler_for_content_type(content_type)
-        _, error_handler = @error_handlers.detect do |key, error_handler|
-          if content_type.to_s.starts_with?(key.to_s)
-            error_handler
-          end
-        end
-
-        error_handler || NullErrorHandler
       end
 
       def fetch_parser_for_content_type(content_type)

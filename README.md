@@ -83,6 +83,8 @@ middleware][rack], and returns the request in adherence to the [Rack response
 specifications][rack-response], namely in a triple of its HTTP Status Code, the
 response Headers, and the response Body.
 
+### Response body parsing
+
 When `ActionClient` is able to infer the request's `Content-Type` to be either
 `JSON` or `XML`, it will parse the returned `body` value ahead of time.
 
@@ -96,8 +98,29 @@ Responses with `Content-Type: application/xml` headers will be parsed into
 [`Nokogiri::XML::Document` instances][nokogiri-document] by
 [`Nokogiri::XML`][nokogiri-xml].
 
-If the response body is invalid JSON or XML, the original `body` will be
-returned, unmodified.
+If the response body is invalid JSON or XML, `#submit` will raise an
+`ActionClient::ParseError`. You can `rescue` from this exception specifically,
+then access both the original response `#body` and the `#content_type` from the
+instance:
+
+```ruby
+def fetch_articles
+  status, headers, body = ArticlesClient.all.submit
+
+  # ...
+
+  body.map { |attributes| Article.new(attributes) }
+rescue ActionClient::ParseError => error
+  Rails.logger.warn "Failed to parse body: #{error.body}. Falling back to empty result set"
+
+  []
+end
+```
+
+It's important to note that parsing occurs before any other middlewares declared
+in `ActionClient::Base` descendants. If your invocation `rescue` block catches
+an exception, none of the middlewares would have been run at that point in the
+execution.
 
 [mdn-post]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST
 [naming-actions]: https://guides.rubyonrails.org/action_controller_overview.html#methods-and-actions

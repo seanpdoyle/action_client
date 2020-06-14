@@ -21,20 +21,16 @@ module ActionClient
         middleware = ActionClient::Middleware::Parser.new(
           app,
           parsers: {
-            "text/plain": -> (body) { raise "whoops" }
-          },
-          error_handlers: {
-            "text/plain": -> (error, type) {
-              [422, {"Content-Type" => type}, error.message]
-            },
+            "text/plain": -> (body) { raise ArgumentError, "whoops" }
           },
         )
 
-        status, headers, body = middleware.call(Rack::RACK_INPUT => payload.lines)
-
-        assert_equal 422, status
-        assert_equal "text/plain", headers["Content-Type"]
-        assert_equal "whoops", body
+        exception = assert_raises ActionClient::ParseError do
+          middleware.call(Rack::RACK_INPUT => payload.lines)
+        end
+        assert_includes exception.message, "whoops"
+        assert_equal payload, exception.body, payload
+        assert_equal "text/plain", exception.content_type
       end
 
       test "#call decodes application/json to JSON" do
@@ -57,14 +53,14 @@ module ActionClient
         assert_equal true, body.first.dig(:nested, :response)
       end
 
-      test "#call recovers from decoding invalid JSON" do
+      test "#call raises ActionClient::ParseError when decoding invalid JSON" do
         payload = "junk"
         app = build_app(Rack::CONTENT_TYPE => "application/json")
         middleware = ActionClient::Middleware::Parser.new(app)
 
-        _, _, body = middleware.call(Rack::RACK_INPUT => payload.lines)
-
-        assert_equal("junk", body)
+        assert_raises ActionClient::ParseError do
+          middleware.call(Rack::RACK_INPUT => payload.lines)
+        end
       end
 
       test "#call decodes application/xml to XML" do
@@ -78,14 +74,14 @@ module ActionClient
         assert_equal "root", document.root["id"]
       end
 
-      test "#call recovers from decoding invalid XML" do
+      test "#call raises ActionClient::ParseError when decoding invalid XML" do
         payload = "junk"
         app = build_app(Rack::CONTENT_TYPE => "application/xml")
         middleware = ActionClient::Middleware::Parser.new(app)
 
-        _, _, document = middleware.call(Rack::RACK_INPUT => payload.lines)
-
-        assert_equal "junk", document
+        assert_raises ActionClient::ParseError do
+          middleware.call(Rack::RACK_INPUT => payload.lines)
+        end
       end
 
       test "#call does not decode a body without a matching header" do
