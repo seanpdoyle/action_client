@@ -1,5 +1,10 @@
 module ActionClient
   class SubmissionJob < ActiveJob::Base
+    class DiscardStatusError < ActionClient::Error
+    end
+    class RetryStatusError < ActionClient::Error
+    end
+
     attr_reader :response
 
     def self.after_perform(only_status: nil, except_status: nil, **options, &block)
@@ -18,6 +23,34 @@ module ActionClient
       options[:if] = -> { http_status_filter.include?(response.status) }
 
       super(**options, &block)
+    end
+
+    def self.retry_on(*exception_classes, only_status: nil, except_status: nil, **options, &block)
+      ([RetryStatusError] + exception_classes).each do |exception_class|
+        super(exception_class, **options, &block)
+      end
+
+      if [only_status, except_status].compact.any?
+        after_perform(only_status: only_status, except_status: except_status) do
+          filter = [only_status, except_status].detect(&:present?)
+
+          raise RetryStatusError, "#{response.status} does not match #{filter}"
+        end
+      end
+    end
+
+    def self.discard_on(*exception_classes, only_status: nil, except_status: nil, &block)
+      ([DiscardStatusError] + exception_classes).each do |exception_class|
+        super(exception_class, &block)
+      end
+
+      if [only_status, except_status].compact.any?
+        after_perform(only_status: only_status, except_status: except_status) do
+          filter = [only_status, except_status].detect(&:present?)
+
+          raise DiscardStatusError, "#{response.status} does not match #{filter}"
+        end
+      end
     end
 
     def perform(client_class_name, action_name, *arguments)
